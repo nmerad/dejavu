@@ -70,6 +70,7 @@ def fingerprint(channel_samples, Fs=DEFAULT_FS,
     FFT the channel, log transform output, find local maxima, then return
     locally sensitive hashes.
     """
+    
     # FFT the signal and extract frequency components
     arr2D = mlab.specgram(
         channel_samples,

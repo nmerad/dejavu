@@ -5,7 +5,7 @@ import multiprocessing
 import os
 import traceback
 import sys
-
+import operator
 
 class Dejavu(object):
 
@@ -127,40 +127,60 @@ class Dejavu(object):
         diff_counter = {}
         largest = 0
         largest_count = 0
-        song_id = -1
+        songs_matches_counter = {}
         for tup in matches:
             sid, diff = tup
             if diff not in diff_counter:
                 diff_counter[diff] = {}
             if sid not in diff_counter[diff]:
                 diff_counter[diff][sid] = 0
+            if sid not in songs_matches_counter:
+                songs_matches_counter[sid] = 0
             diff_counter[diff][sid] += 1
+            songs_matches_counter[sid] += 1
 
             if diff_counter[diff][sid] > largest_count:
                 largest = diff
                 largest_count = diff_counter[diff][sid]
-                song_id = sid
 
-        # extract idenfication
-        song = self.db.get_song_by_id(song_id)
-        if song:
-            # TODO: Clarify what `get_song_by_id` should return.
-            songname = song.get(Dejavu.SONG_NAME, None)
-        else:
-            return None
+        # Sort songs by matching rate desc
+        order = sorted(songs_matches_counter, key=songs_matches_counter.get, reverse=True)
+        recognized_song_id = order[0]
+        recommandation_id = order[1]
+        recognized_song_counter = songs_matches_counter[recognized_song_id]
+        recommandation_counter = songs_matches_counter[recommandation_id]
 
         # return match info
         nseconds = round(float(largest) / fingerprint.DEFAULT_FS *
                          fingerprint.DEFAULT_WINDOW_SIZE *
                          fingerprint.DEFAULT_OVERLAP_RATIO, 5)
-        song = {
-            Dejavu.SONG_ID : song_id,
-            Dejavu.SONG_NAME : songname,
-            Dejavu.CONFIDENCE : largest_count,
-            Dejavu.OFFSET : int(largest),
+
+        # extract idenfication
+        song = self.db.get_song_by_id(recognized_song_id)
+        recommandation = self.db.get_song_by_id(recommandation_id)
+        if song:
+            # TODO: Clarify what `get_song_by_id` should return.
+            song = {
+            Dejavu.SONG_ID : recognized_song_id,
+            Dejavu.SONG_NAME : song.get(Dejavu.SONG_NAME, None),
+            Dejavu.CONFIDENCE : recognized_song_counter,
+            Dejavu.OFFSET : int(recognized_song_counter),
             Dejavu.OFFSET_SECS : nseconds,
             Database.FIELD_FILE_SHA1 : song.get(Database.FIELD_FILE_SHA1, None),}
-        return song
+        else:
+            return None
+
+        if recommandation:
+            # TODO: Clarify what `get_song_by_id` should return.
+            recommandation = {
+            Dejavu.SONG_ID : recommandation_id,
+            Dejavu.SONG_NAME : recommandation.get(Dejavu.SONG_NAME, None),
+            Dejavu.CONFIDENCE : recommandation_counter,
+            Dejavu.OFFSET : int(recommandation_counter),
+            Dejavu.OFFSET_SECS : nseconds,
+            Database.FIELD_FILE_SHA1 : recommandation.get(Database.FIELD_FILE_SHA1, None),}
+
+        return [song, recommandation]
 
     def recognize(self, recognizer, *options, **kwoptions):
         r = recognizer(self)
