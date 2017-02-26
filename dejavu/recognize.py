@@ -27,14 +27,7 @@ class FileRecognizer(BaseRecognizer):
 
     def recognize_file(self, filename):
         frames, self.Fs, file_hash = decoder.read(filename, self.dejavu.limit)
-
-        t = time.time()
         matches = self._recognize(*frames)
-        t = time.time() - t
-
-        for match in matches:
-            match['match_time'] = t
-
         return matches
 
     def recognize(self, filename):

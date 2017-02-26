@@ -73,12 +73,14 @@ class SQLDatabase(Database):
         CREATE TABLE IF NOT EXISTS `%s` (
             `%s` mediumint unsigned not null auto_increment,
             `%s` varchar(250) not null,
+            `%s` varchar(250) not null,
+            `%s` varchar(250) not null,
             `%s` tinyint default 0,
             `%s` binary(20) not null,
         PRIMARY KEY (`%s`),
         UNIQUE KEY `%s` (`%s`)
     ) ENGINE=INNODB;""" % (
-        SONGS_TABLENAME, Database.FIELD_SONG_ID, Database.FIELD_SONGNAME, FIELD_FINGERPRINTED,
+        SONGS_TABLENAME, Database.FIELD_SONG_ID, Database.FIELD_SONGNAME, Database.FIELD_SONGAUTHOR, Database.FIELD_SONGGENRE, FIELD_FINGERPRINTED,
         Database.FIELD_FILE_SHA1,
         Database.FIELD_SONG_ID, Database.FIELD_SONG_ID, Database.FIELD_SONG_ID,
     )
@@ -89,8 +91,8 @@ class SQLDatabase(Database):
             (UNHEX(%%s), %%s, %%s);
     """ % (FINGERPRINTS_TABLENAME, Database.FIELD_HASH, Database.FIELD_SONG_ID, Database.FIELD_OFFSET)
 
-    INSERT_SONG = "INSERT INTO %s (%s, %s) values (%%s, UNHEX(%%s));" % (
-        SONGS_TABLENAME, Database.FIELD_SONGNAME, Database.FIELD_FILE_SHA1)
+    INSERT_SONG = "INSERT INTO %s (%s, %s, %s, %s) values (%%s, %%s, %%s, UNHEX(%%s));" % (
+        SONGS_TABLENAME, Database.FIELD_SONGNAME, Database.FIELD_SONGAUTHOR, Database.FIELD_SONGGENRE, Database.FIELD_FILE_SHA1)
 
     # selects
     SELECT = """
@@ -107,8 +109,8 @@ class SQLDatabase(Database):
     """ % (Database.FIELD_SONG_ID, Database.FIELD_OFFSET, FINGERPRINTS_TABLENAME)
 
     SELECT_SONG = """
-        SELECT %s, HEX(%s) as %s FROM %s WHERE %s = %%s;
-    """ % (Database.FIELD_SONGNAME, Database.FIELD_FILE_SHA1, Database.FIELD_FILE_SHA1, SONGS_TABLENAME, Database.FIELD_SONG_ID)
+        SELECT %s, %s, %s, HEX(%s) as %s FROM %s WHERE %s = %%s;
+    """ % (Database.FIELD_SONGNAME, Database.FIELD_SONGAUTHOR, Database.FIELD_SONGGENRE, Database.FIELD_FILE_SHA1, Database.FIELD_FILE_SHA1, SONGS_TABLENAME, Database.FIELD_SONG_ID)
 
     SELECT_NUM_FINGERPRINTS = """
         SELECT COUNT(*) as n FROM %s
@@ -234,12 +236,12 @@ class SQLDatabase(Database):
         with self.cursor() as cur:
             cur.execute(self.INSERT_FINGERPRINT, (hash, sid, offset))
 
-    def insert_song(self, songname, file_hash):
+    def insert_song(self, songname, author, genre, file_hash):
         """
         Inserts song in the database and returns the ID of the inserted record.
         """
         with self.cursor() as cur:
-            cur.execute(self.INSERT_SONG, (songname, file_hash))
+            cur.execute(self.INSERT_SONG, (songname, author, genre, file_hash))
             return cur.lastrowid
 
     def query(self, hash):

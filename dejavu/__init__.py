@@ -1,4 +1,5 @@
 from __future__ import division
+from tinytag import TinyTag
 from dejavu.database import get_database, Database
 import dejavu.decoder as decoder
 import fingerprint
@@ -12,6 +13,8 @@ class Dejavu(object):
 
     SONG_ID = "song_id"
     SONG_NAME = 'song_name'
+    SONG_AUTHOR = 'song_author'
+    SONG_GENRE = 'song_genre'
     CONFIDENCE = 'confidence'
     MATCH_TIME = 'match_time'
     OFFSET = 'offset'
@@ -42,6 +45,9 @@ class Dejavu(object):
         for song in self.songs:
             song_hash = song[Database.FIELD_FILE_SHA1]
             self.songhashes_set.add(song_hash)
+
+    def get_song_metadata(self, filename):
+        return TinyTag.get(filename)
 
     def fingerprint_directory(self, path, extensions, nprocesses=None):
         # Try to use the maximum amount of processes if not given.
@@ -75,7 +81,7 @@ class Dejavu(object):
         # Loop till we have all of them
         while True:
             try:
-                song_name, hashes, file_hash = iterator.next()
+                filename, song_name, hashes, file_hash = iterator.next()
             except multiprocessing.TimeoutError:
                 continue
             except StopIteration:
@@ -85,7 +91,8 @@ class Dejavu(object):
                 # Print traceback because we can't reraise it here
                 traceback.print_exc(file=sys.stdout)
             else:
-                sid = self.db.insert_song(song_name, file_hash)
+                tags = self.get_song_metadata(filename)
+                sid = self.db.insert_song(tags.title, tags.artist, tags.genre, file_hash)
 
                 self.db.insert_hashes(sid, hashes)
                 self.db.set_song_fingerprinted(sid)
@@ -102,12 +109,13 @@ class Dejavu(object):
         if song_hash in self.songhashes_set:
             print "%s already fingerprinted, continuing..." % song_name
         else:
-            song_name, hashes, file_hash = _fingerprint_worker(
+            filename, song_name, hashes, file_hash = _fingerprint_worker(
                 filepath,
                 self.limit,
                 song_name=song_name
             )
-            sid = self.db.insert_song(song_name, file_hash)
+            tags = self.get_song_metadata(filename)
+            sid = self.db.insert_song(tags.title, tags.artist, tags.genre, file_hash)
 
             self.db.insert_hashes(sid, hashes)
             self.db.set_song_fingerprinted(sid)
@@ -166,6 +174,8 @@ class Dejavu(object):
             song = {
             Dejavu.SONG_ID : recognized_song_id,
             Dejavu.SONG_NAME : song.get(Dejavu.SONG_NAME, None),
+            Dejavu.SONG_AUTHOR : song.get(Dejavu.SONG_AUTHOR, None),
+            Dejavu.SONG_GENRE : song.get(Dejavu.SONG_GENRE, None),
             Dejavu.CONFIDENCE : recognized_song_counter / nb_matches,}
         else:
             return None
@@ -175,6 +185,8 @@ class Dejavu(object):
             recommandation = {
             Dejavu.SONG_ID : recommandation_id,
             Dejavu.SONG_NAME : recommandation.get(Dejavu.SONG_NAME, None),
+            Dejavu.SONG_AUTHOR : recommandation.get(Dejavu.SONG_AUTHOR, None),
+            Dejavu.SONG_GENRE : recommandation.get(Dejavu.SONG_GENRE, None),
             Dejavu.CONFIDENCE : recommandation_counter / nb_matches,}
 
         return [song, recommandation]
@@ -208,7 +220,7 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
                                                  filename))
         result |= set(hashes)
 
-    return song_name, result, file_hash
+    return filename, song_name, result, file_hash
 
 
 def chunkify(lst, n):

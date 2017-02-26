@@ -24,7 +24,8 @@ if __name__ == '__main__':
 		for arg in args: 
 			print "Start recognization from file %s ...\n" % arg
 			recognization = djv.recognize(FileRecognizer, arg)
-			print "From %s we recognized %s\n" % (arg, recognization[0])
+			print "From %s we recognized :" % arg
+			print json.dumps(recognization[0], sort_keys=True, indent=4)
 			recognizations.append(recognization[1])
 
 		if len(recognizations) > 0:
@@ -33,4 +34,5 @@ if __name__ == '__main__':
 				if rec[Dejavu.CONFIDENCE] > recommandation[Dejavu.CONFIDENCE]:
 					recommandation = rec
 
-			print "Following the analysis of previous songs, we recommand %s" % recommandation
+			print "\nFollowing the analysis of previous songs, we recommand :"
+			print json.dumps(recommandation, sort_keys=True, indent=4)

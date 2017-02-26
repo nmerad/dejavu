@@ -9,6 +9,7 @@ So far Dejavu has only been tested on Unix systems.
 * [`scipy`](http://www.scipy.org/), used in peak finding algorithms
 * [`matplotlib`](http://matplotlib.org/), used for spectrograms and plotting
 * [`MySQLdb`](http://mysql-python.sourceforge.net/MySQLdb.html) for interfacing with MySQL databases
+* ['tinytag'](https://pypi.python.org/pypi/tinytag/) for reading song's tags (metadata)
 
 For installing `ffmpeg` on Mac OS X, I highly recommend [this post](http://jungels.net/articles/ffmpeg-howto.html).
 
@@ -21,6 +22,7 @@ Install the dependencies:
     sudo yum install numpy scipy python-matplotlib ffmpeg portaudio-devel
     pip install PyAudio
     pip install pydub
+    pip install tinytag
     
 Now setup virtualenv ([howto?](http://www.pythoncentral.io/how-to-install-virtualenv-python/)):
 
