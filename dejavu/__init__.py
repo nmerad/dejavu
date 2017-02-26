@@ -1,3 +1,4 @@
+from __future__ import division
 from dejavu.database import get_database, Database
 import dejavu.decoder as decoder
 import fingerprint
@@ -128,7 +129,9 @@ class Dejavu(object):
         largest = 0
         largest_count = 0
         songs_matches_counter = {}
+        nb_matches = 0
         for tup in matches:
+            nb_matches += 1
             sid, diff = tup
             if diff not in diff_counter:
                 diff_counter[diff] = {}
@@ -163,10 +166,7 @@ class Dejavu(object):
             song = {
             Dejavu.SONG_ID : recognized_song_id,
             Dejavu.SONG_NAME : song.get(Dejavu.SONG_NAME, None),
-            Dejavu.CONFIDENCE : recognized_song_counter,
-            Dejavu.OFFSET : int(recognized_song_counter),
-            Dejavu.OFFSET_SECS : nseconds,
-            Database.FIELD_FILE_SHA1 : song.get(Database.FIELD_FILE_SHA1, None),}
+            Dejavu.CONFIDENCE : recognized_song_counter / nb_matches,}
         else:
             return None
 
@@ -175,10 +175,7 @@ class Dejavu(object):
             recommandation = {
             Dejavu.SONG_ID : recommandation_id,
             Dejavu.SONG_NAME : recommandation.get(Dejavu.SONG_NAME, None),
-            Dejavu.CONFIDENCE : recommandation_counter,
-            Dejavu.OFFSET : int(recommandation_counter),
-            Dejavu.OFFSET_SECS : nseconds,
-            Database.FIELD_FILE_SHA1 : recommandation.get(Database.FIELD_FILE_SHA1, None),}
+            Dejavu.CONFIDENCE : recommandation_counter / nb_matches,}
 
         return [song, recommandation]
 

@@ -29,13 +29,13 @@ class FileRecognizer(BaseRecognizer):
         frames, self.Fs, file_hash = decoder.read(filename, self.dejavu.limit)
 
         t = time.time()
-        match = self._recognize(*frames)
+        matches = self._recognize(*frames)
         t = time.time() - t
 
-        #if match:
-        #    match['match_time'] = t
+        for match in matches:
+            match['match_time'] = t
 
-        return match
+        return matches
 
     def recognize(self, filename):
         return self.recognize_file(filename)
