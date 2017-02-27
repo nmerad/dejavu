@@ -21,18 +21,23 @@ if __name__ == '__main__':
 		djv = Dejavu(config)
 
 		recognizations = []
+		ids = []
 		for arg in args: 
 			print "Start recognization from file %s ...\n" % arg
 			recognization = djv.recognize(FileRecognizer, arg)
 			print "From %s we recognized :" % arg
 			print json.dumps(recognization[0], sort_keys=True, indent=4)
 			recognizations.append(recognization[1])
+			ids.append(recognization[0][Dejavu.SONG_ID])
 
+		print ids
 		if len(recognizations) > 0:
-			recommandation = recognization[1]
+			recommandation = None
+			maxConfidence = -1
 			for rec in recognizations:
-				if rec[Dejavu.CONFIDENCE] > recommandation[Dejavu.CONFIDENCE]:
+				if (rec[Dejavu.CONFIDENCE] > maxConfidence) and (rec[Dejavu.SONG_ID] not in ids):
 					recommandation = rec
+					maxConfidence = rec[Dejavu.CONFIDENCE]
 
 			print "\nFollowing the analysis of previous songs, we recommand :"
 			print json.dumps(recommandation, sort_keys=True, indent=4)
