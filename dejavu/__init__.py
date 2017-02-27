@@ -92,7 +92,10 @@ class Dejavu(object):
                 traceback.print_exc(file=sys.stdout)
             else:
                 tags = self.get_song_metadata(filename)
-                sid = self.db.insert_song(tags.title, tags.artist, tags.genre, file_hash)
+                title = tags.title or filename
+                artist = tags.artist or ""
+                genre = tags.genre or "" 
+                sid = self.db.insert_song(title, artist, genre, file_hash)
 
                 self.db.insert_hashes(sid, hashes)
                 self.db.set_song_fingerprinted(sid)
@@ -115,7 +118,10 @@ class Dejavu(object):
                 song_name=song_name
             )
             tags = self.get_song_metadata(filename)
-            sid = self.db.insert_song(tags.title, tags.artist, tags.genre, file_hash)
+            title = tags.title or filename
+            artist = tags.artist or ""
+            genre = tags.genre or "" 
+            sid = self.db.insert_song(title, artist, genre, file_hash)
 
             self.db.insert_hashes(sid, hashes)
             self.db.set_song_fingerprinted(sid)
